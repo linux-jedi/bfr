@@ -80,11 +80,9 @@ fn interpret_program(program: &Program) {
             Instruction::DecData => state.memory[state.ptr] = state.memory[state.ptr].wrapping_sub(1),
             Instruction::Write => {
                 io::stdout().write_all(&[state.memory[state.ptr]]).unwrap();
-                // println!("Write {}", state.memory[state.ptr]);
             },
             Instruction::Read => {
                 io::stdin().read_exact(&mut state.memory[state.ptr..state.ptr+1]).unwrap();
-                // println!("Got Number {:?}", state.memory[state.ptr]);
             },
             Instruction::JumpNotZero => {
                 if state.memory[state.ptr] != 0 {
@@ -100,6 +98,7 @@ fn interpret_program(program: &Program) {
                             _ => (),
                         }
                     }
+                    state.pc -= 1; // jump back to instruction before '['
 
                     if bracket_nesting > 0 {
                         panic!("unmatched '[' at {}", saved_pc);
@@ -121,6 +120,7 @@ fn interpret_program(program: &Program) {
                         }
                         state.pc += 1;
                     }
+                    state.pc -= 1; // move back to closing bracket
 
                     // TODO: make this return error
                     if bracket_nesting > 0 {
@@ -129,7 +129,6 @@ fn interpret_program(program: &Program) {
                 }
             },
             Instruction::Invalid => (),
-
         }
 
         state.pc += 1;
