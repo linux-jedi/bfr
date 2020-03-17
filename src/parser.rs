@@ -1,4 +1,4 @@
-
+use std::io;
 use std::io::BufRead;
 
 pub struct Program {
@@ -18,9 +18,9 @@ pub enum Instruction {
     JumpNotZero,
 }
 
-pub fn parse <R: BufRead>(r: &mut R) -> Program {
+pub fn parse <R: BufRead>(r: &mut R) -> Result<Program, io::Error> {
     let mut chars = Vec::new();
-    r.read_to_end(&mut chars).unwrap();
+    r.read_to_end(&mut chars)?;
     
     let instructions: Vec<Instruction> = chars.iter()
         .map(|&character| {
@@ -38,5 +38,5 @@ pub fn parse <R: BufRead>(r: &mut R) -> Program {
         })
         .collect();
 
-    Program {instructions}
+    Ok(Program {instructions})
 }
