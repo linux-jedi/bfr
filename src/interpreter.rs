@@ -20,11 +20,11 @@ impl InterpreterState {
 }
 
 // TODO: have this return Result(OK, err)
-pub fn interpret_program(program: &Program) {
+pub fn interpret_program(program: &Program, jump_table: &Vec<usize>) {
     let mut state = InterpreterState::new(30000);
 
     while state.pc < program.instructions.len() {
-        // run instructions
+        // execute instruction
         let instruction = &program.instructions[state.pc];
 
         match instruction {
@@ -40,51 +40,26 @@ pub fn interpret_program(program: &Program) {
             },
             Instruction::JumpNotZero => {
                 if state.memory[state.ptr] != 0 {
-                    let mut bracket_nesting: i32 = 1;
-                    let saved_pc = state.pc;
-
-                    while bracket_nesting > 0 && state.pc > 0 {
-                        state.pc -= 1;
-
-                        match program.instructions[state.pc] {
-                            Instruction::JumpNotZero => bracket_nesting += 1,
-                            Instruction::JumpZero => bracket_nesting -= 1,
-                            _ => (),
-                        }
-                    }
-                    state.pc -= 1; // jump back to instruction before '['
-
-                    if bracket_nesting > 0 {
-                        panic!("unmatched '[' at {}", saved_pc);
-                    }
+                    state.pc = jump_table[state.pc];
+                } else {
+                    state.pc += 1;
                 }
             },
             Instruction::JumpZero => {
                 if state.memory[state.ptr] == 0 {
-                    let mut bracket_nesting: i32 = 1;
-                    let saved_pc = state.pc;
-
-                    // find the closing bracket
+                    state.pc = jump_table[state.pc];
+                } else {
                     state.pc += 1;
-                    while bracket_nesting > 0 && state.pc < program.instructions.len() {
-                        match program.instructions[state.pc] {
-                            Instruction::JumpNotZero => bracket_nesting -= 1,
-                            Instruction::JumpZero => bracket_nesting += 1,
-                            _ => (),
-                        }
-                        state.pc += 1;
-                    }
-                    state.pc -= 1; // move back to closing bracket
-
-                    // TODO: make this return error
-                    if bracket_nesting > 0 {
-                        panic!("unmatched '[' at {}", saved_pc);
-                    }
                 }
             },
             Instruction::Invalid => (),
         }
 
-        state.pc += 1;
+        // Determine if pc should be incremented
+        match instruction {
+            Instruction::JumpZero => (),
+            Instruction::JumpNotZero => (),
+            _ => state.pc += 1,
+        }
     }
 }
