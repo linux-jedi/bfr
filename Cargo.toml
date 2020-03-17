@@ -1,5 +1,5 @@
 [package]
-name = "bf-parser"
+name = "bfr"
 version = "0.1.0"
 authors = ["linux-jedi <calebtho@usc.edu>"]
 edition = "2018"
