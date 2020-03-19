@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::io::{self, Write, Read};
 
 use crate::parser::Instruction;
@@ -20,18 +21,20 @@ impl InterpreterState {
 }
 
 // TODO: have this return Result(OK, err)
-pub fn interpret_program(program: &Program, jump_table: &Vec<usize>) {
+pub fn interpret_program(program: &Program) {
     let mut state = InterpreterState::new(30000);
 
-    while state.pc < program.instructions.len() {
+    while state.pc < program.ops.len() {
         // execute instruction
-        let instruction = &program.instructions[state.pc];
+        let op = &program.ops[state.pc];
 
-        match instruction {
-            Instruction::IncPtr => state.ptr += 1,
-            Instruction::DecPtr => state.ptr -= 1,
-            Instruction::IncData => state.memory[state.ptr] = state.memory[state.ptr].wrapping_add(1),
-            Instruction::DecData => state.memory[state.ptr] = state.memory[state.ptr].wrapping_sub(1),
+        match op.op_type {
+            Instruction::IncPtr => state.ptr += op.arg,
+            Instruction::DecPtr => state.ptr -= op.arg,
+            Instruction::IncData => 
+                state.memory[state.ptr] = state.memory[state.ptr].wrapping_add(op.arg.try_into().unwrap()),
+            Instruction::DecData =>
+                state.memory[state.ptr] = state.memory[state.ptr].wrapping_sub(op.arg.try_into().unwrap()),
             Instruction::Write => {
                 io::stdout().write_all(&[state.memory[state.ptr]]).unwrap();
             },
@@ -40,14 +43,14 @@ pub fn interpret_program(program: &Program, jump_table: &Vec<usize>) {
             },
             Instruction::JumpNotZero => {
                 if state.memory[state.ptr] != 0 {
-                    state.pc = jump_table[state.pc];
+                    state.pc = op.arg;
                 } else {
                     state.pc += 1;
                 }
             },
             Instruction::JumpZero => {
                 if state.memory[state.ptr] == 0 {
-                    state.pc = jump_table[state.pc];
+                    state.pc = op.arg;
                 } else {
                     state.pc += 1;
                 }
@@ -56,7 +59,7 @@ pub fn interpret_program(program: &Program, jump_table: &Vec<usize>) {
         }
 
         // Determine if pc should be incremented
-        match instruction {
+        match op.op_type {
             Instruction::JumpZero => (),
             Instruction::JumpNotZero => (),
             _ => state.pc += 1,

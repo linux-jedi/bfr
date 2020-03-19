@@ -1,5 +1,4 @@
 mod interpreter;
-mod opt;
 mod parser;
 
 use std::env;
@@ -25,11 +24,11 @@ fn main() {
     };  
 
     let mut buf_reader = BufReader::new(file);
-    let program = parser::parse(&mut buf_reader).unwrap();
+    let instructions = parser::parse(&mut buf_reader).unwrap();
 
-    // Build jump table
-    let jump_table = opt::compute_jumptable(&program);
+    // Build program
+    let program = parser::merge_ops(&instructions);
 
     // Let's rev it up
-    interpreter::interpret_program(&program, &jump_table);
+    interpreter::interpret_program(&program);
 }
