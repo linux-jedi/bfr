@@ -6,6 +6,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
+use std::time::Instant;
 
 fn main() {
     // Get Arguments
@@ -30,5 +31,8 @@ fn main() {
     let program = parser::merge_ops(&instructions);
 
     // Let's rev it up
+    let now = Instant::now();
     interpreter::interpret_program(&program);
+
+    println!("Time Elapsed: {}", now.elapsed().as_secs_f64());
 }

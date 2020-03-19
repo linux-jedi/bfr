@@ -96,22 +96,26 @@ pub fn interpret_program(program: &Program) {
         }
 
         // Trace
-        match op.op_type {
-            Instruction::JumpZero => curr_trace.clear(),
-            Instruction::JumpNotZero if curr_trace.len() > 0 => {
-                *trace_count.entry(serialize_ops(&curr_trace)).or_insert(0) += 1;
-                curr_trace.clear();
-            },
-            Instruction::JumpNotZero => (),
-            _ => curr_trace.push(*op),
+        if cfg!(debug_assertions) {
+            match op.op_type {
+                Instruction::JumpZero => curr_trace.clear(),
+                Instruction::JumpNotZero if curr_trace.len() > 0 => {
+                    *trace_count.entry(serialize_ops(&curr_trace)).or_insert(0) += 1;
+                    curr_trace.clear();
+                },
+                Instruction::JumpNotZero => (),
+                _ => curr_trace.push(*op),
+            }
         }
     }
 
     // print trace
-    let mut trace_count_vec: Vec<_> = trace_count.iter().collect();
-    trace_count_vec.sort_by(|a, b| b.1.cmp(a.1));
+    if cfg!(debug_assertions) {
+        let mut trace_count_vec: Vec<_> = trace_count.iter().collect();
+        trace_count_vec.sort_by(|a, b| b.1.cmp(a.1));
 
-    for trace in trace_count_vec.iter() {
-        println!("{:10}\t{}", trace.0, trace.1);
+        for trace in trace_count_vec.iter() {
+            println!("{:10}\t{}", trace.0, trace.1);
+        }
     }
 }
